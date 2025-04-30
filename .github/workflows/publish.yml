@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  github-packages:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          always-auth: true
+          registry-url: https://npm.pkg.github.com/
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  npm:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+          always-auth: true
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Remove @lucasliet scope from package name
+        run: |
+          jq 'if .name | test("^@lucasliet/") then .name |= sub("^@lucasliet/";"") else . end' package.json > package.tmp.json
+          mv package.tmp.json package.json
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  jsr:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Setup deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: |
+          cd dist/deno
+          deno install
+          cd ../..
+      - name: Publish via JSR
+        run: npx jsr publish --allow-slow-types --allow-dirty

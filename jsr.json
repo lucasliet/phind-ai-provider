@@ -1,0 +1,12 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@lucasliet/phind-ai-provider",
+  "version": "1.0.1",
+  "exports": {
+    ".": "./dist/deno/index.ts"
+  },
+  "publish": {
+    "include": [ "LICENSE", "README.md", "dist/deno/**/*.ts" ],
+    "exclude": [ "**/*.test.ts", "**/*.bak", "**/node_modules/**" ]
+  }
+}
