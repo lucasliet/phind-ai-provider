@@ -104,4 +104,4 @@ jobs:
           deno install
           cd ../..
       - name: Publish via JSR
-        run: npx jsr publish --allow-slow-types --allow-dirty
+        run: npx jsr publish

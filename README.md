@@ -2,9 +2,10 @@
 
 Um provedor para o [Vercel AI SDK](https://sdk.vercel.ai/) que permite integrar facilmente o modelo de IA do Phind em suas aplicações JavaScript/TypeScript.
 
-[![NPM](https://img.shields.io/npm/v/phind-ai-provider)](https://www.npmjs.com/package/phind-ai-provider)
 [![JSR @lucasliet](https://jsr.io/badges/@lucasliet)](https://jsr.io/@lucasliet)
 [![publish](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml/badge.svg)](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml)
+[![JSR Version](https://img.shields.io/jsr/v/%40lucasliet/phind-ai-provider)](https://jsr.io/@lucasliet/phind-ai-provider)
+[![NPM](https://img.shields.io/npm/v/phind-ai-provider)](https://www.npmjs.com/package/phind-ai-provider)
 
 ## Características
 
@@ -31,7 +32,6 @@ import { PhindAIService } from "jsr:@lucasliet/phind-ai-provider";
 ## Uso Básico
 
 ```typescript
-// app/api/chat/route.ts
 import { PhindAIService } from "phind-ai-provider";
 import { generateText } from "ai";
 
@@ -62,7 +62,7 @@ async function askQuestion() {
 }
 
 // Uso com streaming
-async function askQuestionWithStream() {
+async function askQuestionWithReader() {
   const phind = new PhindAIService();
   const reader = await phind.chatStream([
     { role: "user", content: "Explique brevemente o que é inteligência artificial." }

@@ -1,5 +1,9 @@
 import { LanguageModelV1, LanguageModelV1FinishReason, LanguageModelV1CallWarning, LanguageModelV1StreamPart } from '@ai-sdk/provider';
 
+/** 
+ * Service for communicating with the Phind AI API.
+ * Implements the LanguageModelV1 interface from the AI SDK.
+ */
 export class PhindAIService implements LanguageModelV1 {
   readonly specificationVersion = 'v1';
   readonly defaultObjectGenerationMode = 'json';
@@ -14,18 +18,26 @@ export class PhindAIService implements LanguageModelV1 {
     'User-Agent': '',
   };
 
+  /**
+   * @param model Model identifier (e.g., 'Phind-70B')
+   */
   constructor(model: string = 'Phind-70B') {
     this.modelId = model;
   }
 
+  /** Name of this service provider */
   get provider(): string {
     return 'phind';
   }
 
   /**
-   * Converte o prompt do SDK (string ou array de mensagens) para o formato aceito pela API
+   * Convert SDK prompt (string or message array) into API-compatible format.
+   * @param prompt Prompt to normalize
+   * @returns Array of message objects with role and content
    */
-  private _normalizeMessages(prompt: string | Array<{ role: string; content: any }>): { role: string, content: string }[] {
+  private _normalizeMessages(
+    prompt: string | Array<{ role: string; content: any }>,
+  ): { role: string; content: string }[] {
     if (typeof prompt === 'string') {
       return [{ role: 'user', content: prompt }];
     }
@@ -40,7 +52,13 @@ export class PhindAIService implements LanguageModelV1 {
     });
   }
 
-  async doGenerate(options: Parameters<LanguageModelV1['doGenerate']>[0]) {
+  /**
+   * Generate text synchronously (full) using the API.
+   * @param options Generation options (prompt, settings, etc.)
+   */
+  async doGenerate(
+    options: Parameters<LanguageModelV1['doGenerate']>[0],
+  ): Promise<Awaited<ReturnType<LanguageModelV1['doGenerate']>>> {
     const messages = this._normalizeMessages(options.prompt);
     const text = await this.chat(messages);
     return {
@@ -55,9 +73,16 @@ export class PhindAIService implements LanguageModelV1 {
     };
   }
 
-  async doStream(options: Parameters<LanguageModelV1['doStream']>[0]) {
+  /**
+   * Stream text generation from the API.
+   * @param options Generation options (prompt, settings, etc.)
+   * @returns Stream of text parts
+   */
+  async doStream(
+    options: Parameters<LanguageModelV1['doStream']>[0],
+  ): Promise<Awaited<ReturnType<LanguageModelV1['doStream']>>> {
     const messages = this._normalizeMessages(options.prompt);
-    const reader = await this.chatStream(messages);
+    const reader = await this.chatReader(messages);
     const stream = new ReadableStream<LanguageModelV1StreamPart>({
       async start(controller) {
         const decoder = new TextDecoder();
@@ -72,25 +97,68 @@ export class PhindAIService implements LanguageModelV1 {
         }
         controller.enqueue({ type: 'finish', finishReason: 'stop', usage: { promptTokens: NaN, completionTokens: NaN } });
         controller.close();
+        reader.releaseLock();
       }
     });
     return { stream, rawCall: { rawPrompt: options.prompt, rawSettings: {} }, rawResponse: {}, request: {}, warnings: [] };
   }
 
-  async chat(messages: { role: string, content: string }[]): Promise<string> {
+  /**
+   * Execute a chat request and return the complete response text.
+   * @param messages Message history
+   * @returns Full text returned by the API
+   */
+  async chat(messages: { role: string; content: string }[]): Promise<string> {
     const raw = await this._fetchChatResponse(messages);
     const text = await raw.text();
     const lines = text.split('\n');
     return this._mapResponse(lines);
   }
 
-  async chatStream(messages: { role: string, content: string }[]): Promise<ReadableStreamDefaultReader> {
+  /**
+   * Execute a chat request in streaming mode and return a reader.
+   * @param messages Message history
+   * @returns Reader for the response stream
+   */
+  async chatReader(
+    messages: { role: string; content: string }[],
+  ): Promise<ReadableStreamDefaultReader> {
     const response = await this._fetchChatResponse(messages);
     const reader = response.body!.getReader();
     return this.streamMapResponse(reader, this._mapResponse);
   }
 
-  async streamMapResponse(reader: ReadableStreamDefaultReader, mapResponse: (lines: string[]) => string): Promise<ReadableStreamDefaultReader> {
+  /**
+   * Async generator yielding chunks from the chat stream.
+   * @param messages Message history
+   */
+  async *chatStream(
+    messages: { role: string; content: string }[],
+  ): AsyncGenerator<string> {
+    const reader = await this.chatReader(messages);
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const lines = decoder.decode(value, { stream: true }).split('\n');
+      for (const line of lines) {
+        let delta = line;
+        if (delta) yield delta;
+      }
+    }
+    reader.releaseLock();
+  }
+
+  /**
+   * Maps raw stream data using the provided mapResponse function.
+   * @param reader Raw stream reader
+   * @param mapResponse Function to map SSE lines to text
+   * @returns Reader for the mapped stream
+   */
+  async streamMapResponse(
+    reader: ReadableStreamDefaultReader,
+    mapResponse: (lines: string[]) => string,
+  ): Promise<ReadableStreamDefaultReader> {
     return new ReadableStream<Uint8Array>({
       async start(controller) {
         const decoder = new TextDecoder();
@@ -101,12 +169,15 @@ export class PhindAIService implements LanguageModelV1 {
           controller.enqueue(new TextEncoder().encode(mappedResponse));
         }
         controller.close();
+        reader.releaseLock();
       }
     }).getReader();
   }
 
   /**
-   * Executa a requisição de chat e retorna o corpo completo como texto.
+   * Send chat request to the API and return the raw Response object.
+   * @param messageHistory Chat message history for the payload
+   * @throws Error on HTTP failure
    */
   private async _fetchChatResponse(
     messageHistory: Array<{ content: string; role: string }>,
@@ -126,20 +197,25 @@ export class PhindAIService implements LanguageModelV1 {
     });
     if (!response.ok) {
       const err = await response.text();
-      console.error('Erro Phind:', err);
-      throw new Error(`Falha ao gerar texto (Phind): ${response.status} ${response.statusText}`);
+      console.error('Phind Error:', err);
+      throw new Error(`Failed to generate text (Phind): ${response.status} ${response.statusText}`);
     }
     return response;
   }
 
+  /**
+   * Build the final text output from SSE lines.
+   * @param lines SSE event lines
+   * @returns Parsed text content
+   */
   private _mapResponse(lines: string[]): string {
-    let out = '';
-    for (const l of lines) {
-      if (!l.startsWith('data: ') || l.includes('[DONE]')) continue;
+    let result = '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
       try {
-        out += JSON.parse(l.substring(5))?.choices?.[0]?.delta?.content ?? '';
+        result += JSON.parse(line.substring(5))?.choices?.[0]?.delta?.content ?? '';
       } catch { /* ignore parse errors */ }
     }
-    return out.replace(/\\n/g, '\n');
+    return result.replace(/\\n/g, '\n');
   }
 }
