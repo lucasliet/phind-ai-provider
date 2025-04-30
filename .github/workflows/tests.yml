@@ -1,21 +1,19 @@
-name: Build
+name: Run tests
 
 on:
   workflow_call:
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  tests:
-    uses: ./.github/workflows/tests.yml
-
   build:
-    needs:
-      - tests
     concurrency: build-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -23,11 +21,5 @@ jobs:
           cache: 'npm'
       - run: npm clean-install
 
-      - name: Build
-        run: npm run build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
+      - name: Tests
+        run: npm test
