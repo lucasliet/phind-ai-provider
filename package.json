@@ -1,6 +1,6 @@
 {
   "name": "@lucasliet/phind-ai-provider",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "phind ai provider compatible with vercel ai sdk",
   "homepage": "https://github.com/lucasliet/phind-ai-provider#readme",
   "bugs": {
@@ -15,7 +15,6 @@
   },
   "license": "MIT",
   "author": "Lucas Oliveira",
-  "type": "module",
   "keywords": [
     "phind",
     "ai",

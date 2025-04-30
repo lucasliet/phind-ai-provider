@@ -66,7 +66,7 @@ async function askQuestion() {
 // Uso com streaming
 async function askQuestionWithReader() {
   const phind = new PhindAIService();
-  const reader = await phind.chatStream([
+  const reader = await phind.chatReader([
     { role: "user", content: "Explique brevemente o que é inteligência artificial." }
   ]);
   
@@ -78,13 +78,25 @@ async function askQuestionWithReader() {
     console.log(decoder.decode(value));
   }
 }
+
+// Uso com streaming
+async function askQuestionWithStreaming() {
+  const phind = new PhindAIService();
+  const stream = await phind.chatStream([
+    { role: "user", content: "Explique brevemente o que é inteligência artificial." }
+  ]);
+  
+  for await (const chunk of stream) {
+    console.log(chunk);
+  }
+}
 ```
 
 ## Opções Avançadas
 
 ### Modelos
 
-O Phind tem diferentes modelos disponíveis. Por padrão, usamos o "o3-mini":
+O Phind tem diferentes modelos disponíveis. Por padrão, usamos o "Phind-70B", pois é o único modelo gratuito atualmente:
 
 ```typescript
 // Use o modelo Phind-70B (padrão)
