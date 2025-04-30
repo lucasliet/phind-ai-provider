@@ -1,4 +1,4 @@
-name: Release
+name: Publish Release
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    name: Test and build artifacts
     uses: ./.github/workflows/build.yml
 
   github-packages:
@@ -28,13 +29,11 @@ jobs:
           always-auth: true
           registry-url: https://npm.pkg.github.com/
       
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
         with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+          name: "dist"
+          path: "dist"
       
       - name: Publish
         run: npm publish
@@ -58,13 +57,11 @@ jobs:
           registry-url: https://registry.npmjs.org
           always-auth: true
       
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
         with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+          name: "dist"
+          path: "dist"
       
       - name: Remove @lucasliet scope from package name
         run: |
@@ -80,18 +77,18 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
         with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+          name: "dist"
+          path: "dist"
       
       - name: Setup node
         uses: actions/setup-node@v4
@@ -107,7 +104,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/deno
-          key: deno-${{ runner.os }}-${{ hashFiles('**/deno.lock') }}
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: |
             deno-${{ runner.os }}-
       - run: |

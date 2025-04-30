@@ -1,4 +1,4 @@
-name: Build
+name: Build and upload dist artifact
 
 on:
   workflow_call:
@@ -8,6 +8,7 @@ jobs:
     uses: ./.github/workflows/tests.yml
 
   build:
+    name: Build and upload dist artifact
     needs:
       - tests
     concurrency: build-${{ github.ref }}
@@ -30,4 +31,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist
+          retention-days: 1
           path: dist

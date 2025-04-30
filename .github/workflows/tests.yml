@@ -7,8 +7,9 @@ on:
       - main
 
 jobs:
-  build:
-    concurrency: build-${{ github.ref }}
+  tests:
+    name: Run tests
+    concurrency: tests-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,5 +22,4 @@ jobs:
           cache: 'npm'
       - run: npm clean-install
 
-      - name: Tests
-        run: npm test
+      - run: npm test

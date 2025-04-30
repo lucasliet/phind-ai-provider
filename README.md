@@ -2,6 +2,7 @@
 
 Um provedor para o [Vercel AI SDK](https://sdk.vercel.ai/) que permite integrar facilmente o modelo de IA do Phind em suas aplicações JavaScript/TypeScript.
 
+[![License](https://img.shields.io/github/license/lucasliet/phind-ai-provider?logo=gitbook&labelColor=%23262c31&color=red&logoColor=white)](LICENSE)
 [![JSR @lucasliet](https://jsr.io/badges/@lucasliet)](https://jsr.io/@lucasliet)
 [![tests](https://github.com/lucasliet/phind-ai-provider/actions/workflows/tests.yml/badge.svg)](https://github.com/lucasliet/phind-ai-provider/actions/workflows/tests.yml)
 [![publish](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml/badge.svg)](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml)
@@ -102,7 +103,3 @@ Este pacote funciona em:
 - Deno (via JSR)
 - Bun
 - Ambientes edge (Vercel Edge Runtime, Cloudflare Workers, etc.)
-
-## Licença
-
-[MIT](LICENSE)
