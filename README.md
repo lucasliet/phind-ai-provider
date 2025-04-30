@@ -3,6 +3,7 @@
 Um provedor para o [Vercel AI SDK](https://sdk.vercel.ai/) que permite integrar facilmente o modelo de IA do Phind em suas aplicações JavaScript/TypeScript.
 
 [![JSR @lucasliet](https://jsr.io/badges/@lucasliet)](https://jsr.io/@lucasliet)
+[![tests](https://github.com/lucasliet/phind-ai-provider/actions/workflows/tests.yml/badge.svg)](https://github.com/lucasliet/phind-ai-provider/actions/workflows/tests.yml)
 [![publish](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml/badge.svg)](https://github.com/lucasliet/phind-ai-provider/actions/workflows/publish.yml)
 [![JSR Version](https://img.shields.io/jsr/v/%40lucasliet/phind-ai-provider)](https://jsr.io/@lucasliet/phind-ai-provider)
 [![NPM](https://img.shields.io/npm/v/phind-ai-provider)](https://www.npmjs.com/package/phind-ai-provider)
